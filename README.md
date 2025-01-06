@@ -34,4 +34,3 @@ A button may be a list of hashes with
   - costs: what it costs to click the button.
   - on_click:   Symbol to call when clicking the button.
     This must match a function name that we can call using "send"
-
