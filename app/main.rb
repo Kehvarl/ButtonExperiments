@@ -1,7 +1,7 @@
 require 'app/game.rb'
 
 def init args
-    args.state.game = Game.new()
+    args.state.game = Game.new(args)
 end
 
 
@@ -10,6 +10,6 @@ def tick args
         init args
     end
 
-    args.state.game.tick(args)
+    args.state.game.tick()
+    args.state.game.render()
 end
-
