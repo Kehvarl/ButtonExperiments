@@ -1,19 +1,31 @@
 class Game
-    def initialize
+    def initialize args
+        @args = args
         @buttons = {}
         @values = {}
         create_button :produce, 600, 400, "Produce!"
     end
 
-    def tick args
+    def tick
         @buttons.each do |b|
-            self.send(b[1].on_tick, args)
+            self.send(b[1].on_tick)
         end
     end
 
-    def create_button  id, x, y, text, w=80, h=40,
+    def render
+        @buttons.each do |b|
+            @args.outputs.primitives << b[1].primitives
+        end
+    end
+
+    def create_button id, x, y, text, w=nil, h=nil,
             color={r:128,g:128,b:128}, border_color={r:128,g:128,b:128},
             text_color={r:0,b:0,g:0}
+        if w == nil or h == nil
+            w, h = @args.gtk.calcstringbox text
+            w += 20
+            h += 20
+        end
         @buttons[id] = {
             text: text,
             on_click: "#{id}_clicked".to_sym,
@@ -26,10 +38,9 @@ class Game
             ]}
     end
 
-    def produce_clicked args
+    def produce_clicked
     end
 
-    def produce_tick args
-        puts("produce tick")
+    def produce_tick
     end
 end
