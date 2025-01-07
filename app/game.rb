@@ -10,12 +10,36 @@ class Game
         @buttons.each do |b|
             self.send(b[1].on_tick)
         end
+
+        if @args.inputs.mouse.click
+            button = @buttons.find do |k, v|
+                @args.inputs.mouse.click.point.inside_rect? v[:primitives].first
+            end
+        else
+            button = nil
+        end
+
+        if button
+            self.send button[1].on_click
+        end
     end
+
 
     def render
         @buttons.each do |b|
             @args.outputs.primitives << b[1].primitives
         end
+
+        @values.keys.each_with_index do |v, i|
+            @args.outputs.primitives << {x: 0, y: 700 - (i * 15)  ,text: "#{v.capitalize}: #{@values[v]}", r: 0, g: 0, b: 0}.label!
+        end
+    end
+
+    def produce_resource(resource)
+        if !@values.key?(resource)
+            @values[resource] = 0
+        end
+        @values[resource]+= 1
     end
 
     def create_button id, x, y, text, w=nil, h=nil,
@@ -39,6 +63,7 @@ class Game
     end
 
     def produce_clicked
+        produce_resource(:resource)
     end
 
     def produce_tick
