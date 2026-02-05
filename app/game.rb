@@ -41,7 +41,7 @@ class Game
             if self.respond_to? b[1].on_tick
                 self.send(b[1].on_tick)
             end
-            if b[1].highlight and (b[1].highlight_percent < 100)
+            if b[1].highlight and (b[1].highlight_percent <= 100)
                 b[1].primitives[1].w = b[1].primitives[0].w * (b[1].highlight_percent/100)
             end
         end
@@ -75,6 +75,25 @@ class Game
         end
         @values[resource]+= 1
     end
+
+    def get_resource(resource)
+        if !@values.key?(resource)
+            return 0
+        end
+        return @values[resource]
+    end
+
+    def use_resource(resource, qty)
+        if !@values.key?(resource)
+            return false
+        end
+        if @values[resource] < qty
+            return false
+        end
+        @values[resource] -= qty
+        return true
+    end
+
 end
 
 class MyGame < Game
@@ -84,7 +103,29 @@ class MyGame < Game
         highlight_button :produce
         create_button :defend, 600, 450, "Defend!"
         highlight_button :defend, 100
+        @defend_increment = 0.1
+        create_button :fortify, 600, 500, "Fortify (3)"
+        highlight_button :fortify
         puts @buttons
+    end
+
+    def fortify_clicked
+        b = @buttons[:fortify]
+        if b.highlight_percent >= 100
+            if use_resource(:resource, 3)
+                b.highlight_percent = 0
+                @defend_increment *= 0.75
+            end
+        end
+    end
+
+    def fortify_tick
+        b = @buttons[:fortify]
+        if get_resource(:resource) >= 3
+            b.highlight_percent = 100
+        else
+            b.highlight_percent = 0
+        end
     end
 
     def produce_clicked
@@ -110,7 +151,7 @@ class MyGame < Game
 
     def defend_tick
         b = @buttons[:defend]
-        b.highlight_percent -= 0.1
+        b.highlight_percent -= @defend_increment
         if b.highlight_percent <= 0
             @buttons.delete(:defend)
         end
