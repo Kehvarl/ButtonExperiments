@@ -1,4 +1,5 @@
 require 'app/game.rb'
+require 'app/mygame.rb'
 
 def init args
     args.state.game = MyGame.new(args)
