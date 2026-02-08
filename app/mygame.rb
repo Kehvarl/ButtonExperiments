@@ -3,12 +3,14 @@ require 'app/game.rb'
 class MyGame < Game
     def initialize args
         super
-        create_button :produce, 600, 400, "Produce!", visible=true
+        create_button :produce, 600, 400, "Produce!"
         highlight_button :produce
-        create_button :defend, 600, 450, "Defend!", visible=true
+        reveal_button :produce
+        create_button :defend, 600, 450, "Defend!"
         highlight_button :defend, 100
+        reveal_button :defend
         @defend_increment = 0.1
-        create_button :fortify, 600, 500, "Fortify (3)", visible=false
+        create_button :fortify, 600, 500, "Fortify (3)"
         highlight_button :fortify
         puts @buttons
     end
@@ -27,7 +29,7 @@ class MyGame < Game
         b = @buttons[:fortify]
         if get_resource(:resource) >= 3
             b.highlight_percent = 100
-            b.reveal
+            reveal_button :fortify
         else
             b.highlight_percent = 0
         end

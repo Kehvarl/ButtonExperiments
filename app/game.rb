@@ -10,14 +10,14 @@ class Game
         @default_text_color = {r:0,g:0,b:0}
     end
 
-    def create_button id, x, y, text, w=nil, h=nil, visible=false
+    def create_button id, x, y, text, w=nil, h=nil
         if w == nil or h == nil
             w, h = @args.gtk.calcstringbox text
             w += 20
             h += 20
         end
         @buttons[id] = {
-            visible: visible,
+            show: false,
             text: text,
             on_click: "#{id}_clicked".to_sym,
             on_tick: "#{id}_tick".to_sym,
@@ -39,7 +39,7 @@ class Game
     end
 
     def reveal_button id
-        @buttons[id].visible = true
+        @buttons[id].show = true
     end
 
     def create_actor id
@@ -77,7 +77,7 @@ class Game
 
     def render
         @buttons.each do |b|
-            if b[1].visible
+            if b[1].show
                 @args.outputs.primitives << b[1].primitives
                 if b[1].highlight
                     @args.outputs.primitives << b[1].highlight
