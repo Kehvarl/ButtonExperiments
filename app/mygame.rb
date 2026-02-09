@@ -12,7 +12,6 @@ class MyGame < Game
         @defend_increment = 0.1
         create_button :fortify, 600, 500, "Fortify (3)"
         highlight_button :fortify
-        puts @buttons
     end
 
     def fortify_clicked
