@@ -44,7 +44,6 @@ class Game
 
     def create_actor id
         @actors[id] = {
-                    on_click: "#{id}_clicked".to_sym,
                     on_tick: "#{id}_tick".to_sym,
             }
     end
