@@ -12,6 +12,20 @@ class MyGame < Game
         @defend_increment = 0.1
         create_button :fortify, 600, 500, "Fortify (3)"
         highlight_button :fortify
+        create_actor :passive
+    end
+
+    def passive_tick
+        a = @actors[:passive]
+        puts a
+        if not a.has_key?(:countdown)
+            a.countdown = 60
+        end
+        a.countdown -=1
+        if a.countdown <= 0
+            generate_resource(:passive)
+            a.countdown = 60
+        end
     end
 
     def fortify_clicked
