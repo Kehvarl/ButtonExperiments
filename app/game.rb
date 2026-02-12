@@ -34,7 +34,7 @@ class Game
 
     def highlight_button id, starting_percent = 0
         @buttons[id].highlight = true
-        @buttons[id].primitives[1].w *= starting_percent
+        @buttons[id].primitives[1].w = @buttons[id].primitives[0].w * (starting_percent / 100.0)
         @buttons[id].highlight_percent = starting_percent
     end
 
@@ -42,8 +42,10 @@ class Game
         @buttons[id].show = true
     end
 
-    def create_actor id
+    def create_actor id, ticks_total: 60
         @actors[id] = {
+                    ticks_total: ticks_total,
+                    ticks_remaining: ticks_total,
                     on_tick: "#{id}_tick".to_sym,
             }
     end
@@ -68,7 +70,7 @@ class Game
             b = @buttons.find do |k, v|
                 @args.inputs.mouse.click.point.inside_rect? v[:primitives].first
             end
-            if b and self.respond_to? b[1].on_click
+            if b and b.show and self.respond_to? b[1].on_click
                 self.send b[1].on_click
             end
         end
@@ -78,9 +80,6 @@ class Game
         @buttons.each do |b|
             if b[1].show
                 @args.outputs.primitives << b[1].primitives
-                if b[1].highlight
-                    @args.outputs.primitives << b[1].highlight
-                end
             end
         end
 

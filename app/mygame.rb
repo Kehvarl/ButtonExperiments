@@ -17,14 +17,10 @@ class MyGame < Game
 
     def passive_tick
         a = @actors[:passive]
-        puts a
-        if not a.has_key?(:countdown)
-            a.countdown = 60
-        end
-        a.countdown -=1
-        if a.countdown <= 0
+        a.ticks_remaining -=1
+        if a.ticks_remaining <= 0
             generate_resource(:passive)
-            a.countdown = 60
+            a.ticks_remaining = a.ticks_total
         end
     end
 
@@ -73,7 +69,7 @@ class MyGame < Game
         b = @buttons[:defend]
         b.highlight_percent -= @defend_increment
         if b.highlight_percent <= 0
-            @buttons.delete(:defend)
+            b.show = false
         end
     end
 end
