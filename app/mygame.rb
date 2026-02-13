@@ -1,5 +1,10 @@
 require 'app/game.rb'
 
+# TODO
+# - Hide "Passive" count
+# - Increase "Defend" decay rate based on "Passive" Count
+# - "Fortify" reduces "Passive" Count
+
 class MyGame < Game
     def initialize args
         super
