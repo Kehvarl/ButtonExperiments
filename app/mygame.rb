@@ -8,23 +8,24 @@ require 'app/game.rb'
 class MyGame < Game
     def initialize args
         super
-        create_button :produce, 600, 400, "Produce!"
-        highlight_button :produce
-        reveal_button :produce
-        create_button :defend, 600, 450, "Defend!"
+        create_button :meditate, 600, 400, "Meditation"
+        highlight_button :meditate
+        reveal_button :meditate
+        create_button :defend, 600, 450, "Sanity"
         highlight_button :defend, 100
         reveal_button :defend
         @defend_increment = 0.1
-        create_button :fortify, 600, 500, "Fortify (3)"
+        create_button :fortify, 600, 500, "Reaffirm Self (3)"
         highlight_button :fortify
-        create_actor :passive
+        create_actor :whispers
+        @actors[:whispers].ticks_total = 120
     end
 
-    def passive_tick
-        a = @actors[:passive]
+    def whispers_tick
+        a = @actors[:whispers]
         a.ticks_remaining -=1
         if a.ticks_remaining <= 0
-            generate_resource(:passive)
+            generate_resource(:whispers)
             a.ticks_remaining = a.ticks_total
         end
     end
@@ -32,16 +33,16 @@ class MyGame < Game
     def fortify_clicked
         b = @buttons[:fortify]
         if b.highlight_percent >= 100
-            if use_resource(:resource, 3)
+            if use_resource(:clarity, 3)
                 b.highlight_percent = 0
-                @defend_increment *= 0.75
+                use_resource(:whispers, 5)
             end
         end
     end
 
     def fortify_tick
         b = @buttons[:fortify]
-        if get_resource(:resource) >= 3
+        if get_resource(:clarity) >= 3
             b.highlight_percent = 100
             reveal_button :fortify
         else
@@ -49,16 +50,16 @@ class MyGame < Game
         end
     end
 
-    def produce_clicked
-        b = @buttons[:produce]
+    def meditate_clicked
+        b = @buttons[:meditate]
         if b.highlight_percent >= 100
-            generate_resource(:resource)
+            generate_resource(:clarity)
             b.highlight_percent = 0
         end
     end
 
-    def produce_tick
-        b = @buttons[:produce]
+    def meditate_tick
+        b = @buttons[:meditate]
         b.highlight_percent += 1
     end
 
@@ -72,7 +73,10 @@ class MyGame < Game
 
     def defend_tick
         b = @buttons[:defend]
-        b.highlight_percent -= @defend_increment
+        whispers = get_resource(:whispers)
+        decay = @defend_increment + (whispers * 0.01)
+
+        b.highlight_percent -= decay
         if b.highlight_percent <= 0
             b.show = false
         end
