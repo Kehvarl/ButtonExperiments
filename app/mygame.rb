@@ -19,6 +19,7 @@ class MyGame < Game
         highlight_button :fortify
         create_actor :whispers
         @actors[:whispers].ticks_total = 120
+        create_log :diary, 300, 10, 680, 270
     end
 
     def whispers_tick
@@ -27,6 +28,10 @@ class MyGame < Game
         if a.ticks_remaining <= 0
             generate_resource(:whispers)
             a.ticks_remaining = a.ticks_total
+            if rand(10) <3
+                whispers = ["Whispers", "Ghostly touch", "Self doubt", "Management would like a wor."]
+                set_resource_label(:whispers, whispers.sample)
+            end
         end
     end
 
@@ -55,6 +60,7 @@ class MyGame < Game
         if b.highlight_percent >= 100
             generate_resource(:clarity)
             b.highlight_percent = 0
+            add_message(:diary, "Dear Diary: I meditated and I feel empowered.")
         end
     end
 
@@ -78,6 +84,7 @@ class MyGame < Game
 
         b.highlight_percent -= decay
         if b.highlight_percent <= 0
+            add_message(:diary, "Dear Diary: I don't feel like myself anymore.")
             b.show = false
         end
     end
