@@ -6,6 +6,22 @@ require 'app/game.rb'
 # - "Fortify" reduces "Passive" Count
 
 class MyGame < Game
+
+    MEDIATE_MESSAGES = [
+        {whisper_min: 0, whisper_max: 5, text: "Dear Diary: I meditated and I feel empowered."},
+        {whisper_min: 0, whisper_max: 10, text: "Dear Diary: That was a very nice cup of tea."},
+        {whisper_min: 5, whisper_max: 15, text: "Dear Diary: Napped a lot."},
+        {whisper_min: 5, whisper_max: 20, text: "Hello Friend: Why don't you evern write back?"},
+        {whisper_min: 10, whisper_max: 25, text: "Dear Diary: Did you know you can see shapes with your eyes closed?"},
+        {whisper_min: 10, whisper_max: 30, text: "Dear Diary: Sometimes I don't want to stop meditating."},
+        {whisper_min: 15, whisper_max: 35, text: "Dear meditating, I diaried and spilled my tea."},
+        {whisper_min: 15, whisper_max: 40, text: "Lalalalalalallalalalala."},
+        {whisper_min: 20, whisper_max: 45, text: "Words.  So many words.   What did they mean?"},
+        {whisper_min: 20, whisper_max: 50, text: "Dear Diary: I meditated and I feel tired."},
+        {whisper_min: 25, whisper_max: 55, text: ".derewopme leef I dna detatidem I :yraiD raeD"}
+        ]
+
+
     def initialize args
         super
         create_button :meditate, 600, 400, "Meditation"
@@ -55,12 +71,17 @@ class MyGame < Game
         end
     end
 
+    def get_meditate_message(value)
+        allowed = MEDIATE_MESSAGES.select {|m| m.whisper_min <= value && m.whisper_max >= value }
+        allowed.sample().text
+    end
+
     def meditate_clicked
         b = @buttons[:meditate]
         if b.highlight_percent >= 100
             generate_resource(:clarity)
             b.highlight_percent = 0
-            add_message(:diary, "Dear Diary: I meditated and I feel empowered.")
+            add_message(:diary, get_meditate_message(get_resource(:whispers)))
         end
     end
 
