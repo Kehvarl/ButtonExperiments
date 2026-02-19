@@ -62,11 +62,12 @@ class Game
         }
     end
 
-    def add_message(log_id, text)
+    def add_message(log_id, text, color=nil)
         log = @logs[log_id]
         return unless log
 
-        log[:messages] << text
+        c = color || { r: 230, g: 230, b: 230 }
+        log[:messages] << {text: text, color: c}
         log[:messages] = log[:messages].last(log[:max_messages])
     end
 
@@ -82,7 +83,7 @@ class Game
                 self.send(b[1].on_tick)
             end
             if b[1].highlight and (b[1].highlight_percent <= 100)
-                b[1].primitives[1].w = b[1].primitives[0].w * (b[1].highlight_percent/100)
+                b[1].primitives[1].w = b[1].primitives[0].w * (b[1].highlight_percent/100.0)
             end
         end
 
@@ -135,18 +136,18 @@ class Game
             y_cursor = log.y + log.h - log.padding
 
             log.messages.reverse.each do |msg|
-            y_cursor -= log.line_height
-            if y_cursor < log.y + log.padding
-                break
-            end
+                y_cursor -= log.line_height
+                if y_cursor < log.y + log.padding
+                    break
+                end
 
-            @args.outputs.primitives << {
-                x: log.x + log.padding,
-                y: y_cursor,
-                text: msg,
-                size_px: log.line_height-1,
-                r: 230, g: 230, b: 230
-            }.label!
+                @args.outputs.primitives << {
+                    x: log.x + log.padding,
+                    y: y_cursor,
+                    text: msg.text,
+                    size_px: log.line_height-1,
+                    **msg.color
+                }.label!
             end
         end
     end

@@ -8,10 +8,10 @@ require 'app/game.rb'
 class MyGame < Game
 
     MEDIATE_MESSAGES = [
-        {whisper_min: 0, whisper_max: 5, text: "Dear Diary: I meditated and I feel empowered."},
-        {whisper_min: 0, whisper_max: 10, text: "Dear Diary: That was a very nice cup of tea."},
-        {whisper_min: 5, whisper_max: 15, text: "Dear Diary: Napped a lot."},
-        {whisper_min: 5, whisper_max: 20, text: "Hello Friend: Why don't you evern write back?"},
+        {whisper_min: 0, whisper_max: 10, text: "Dear Diary: I meditated and I feel empowered."},
+        {whisper_min: 0, whisper_max: 15, text: "Dear Diary: That was a very nice cup of tea."},
+        {whisper_min: 5, whisper_max: 20, text: "Dear Diary: Napped a lot."},
+        {whisper_min: 5, whisper_max: 25, text: "Hello Friend: Why don't you evern write back?"},
         {whisper_min: 10, whisper_max: 25, text: "Dear Diary: Did you know you can see shapes with your eyes closed?"},
         {whisper_min: 10, whisper_max: 30, text: "Dear Diary: Sometimes I don't want to stop meditating."},
         {whisper_min: 15, whisper_max: 35, text: "Dear meditating, I diaried and spilled my tea."},
@@ -20,6 +20,21 @@ class MyGame < Game
         {whisper_min: 20, whisper_max: 50, text: "Dear Diary: I meditated and I feel tired."},
         {whisper_min: 25, whisper_max: 55, text: ".derewopme leef I dna detatidem I :yraiD raeD"}
         ]
+
+    INTRUSION_MESSAGES = [
+        { whisper_min: 5,  text: "Why are you writing this?" },
+        { whisper_min: 10, text: "We can see you." },
+        { whisper_min: 15, text: "That wasn't meditation." },
+        { whisper_min: 20, text: "Stop pretending this helps." },
+        { whisper_min: 25, text: "The Management is disappointed.", color:{r:230, g:80, b:80}  },
+        { whisper_min: 30, text: "You missed a spot." },
+        { whisper_min: 35, text: "We're still here." },
+        { whisper_min: 40, text: "You don't control this." },
+        { whisper_min: 35, text: "SYSTEM NOTICE: Sanity levels unstable.", color:{r:230, g:80, b:230} },
+        { whisper_min: 40, text: "You are not authorized to ignore this." },
+        { whisper_min: 45, text: "Stop clicking.", color:{r:255, g:255, b:255}  },
+        { whisper_min: 50, text: "The Diary is not private." }
+                ]
 
 
     def initialize args
@@ -48,6 +63,17 @@ class MyGame < Game
                 whispers = ["Whispers", "Ghostly touch", "Self doubt", "Management would like a wor."]
                 set_resource_label(:whispers, whispers.sample)
             end
+            whisper_value = get_resource(:whispers)
+            chance = (whisper_value ** 1.3) * 0.002
+            if rand < chance
+                allowed = INTRUSION_MESSAGES.select { |m| whisper_value >= m[:whisper_min] }
+                intrusion = allowed.sample
+
+                if intrusion
+                    c = intrusion.color || { r: 180, g: 80, b: 200 }
+                    add_message(:diary, intrusion.text, c )
+                end
+            end
         end
     end
 
@@ -73,7 +99,8 @@ class MyGame < Game
 
     def get_meditate_message(value)
         allowed = MEDIATE_MESSAGES.select {|m| m.whisper_min <= value && m.whisper_max >= value }
-        allowed.sample().text
+        msg = allowed.sample()
+        msg ? msg.text : "Dear Diary: ..."
     end
 
     def meditate_clicked
@@ -105,9 +132,15 @@ class MyGame < Game
 
         b.highlight_percent -= decay
         if b.highlight_percent <= 0
-            add_message(:diary, "Dear Diary: I don't feel like myself anymore.")
+            if whispers < 10
+                mgs = "I don't feel like myself anymore."
+            elsif whispers < 25
+                msg = "I don't feel like myself."
+            else
+                msg = "I don't."
+            end
+            add_message(:diary, "Dear Diary: #{msg}")
             b.show = false
         end
     end
 end
-
