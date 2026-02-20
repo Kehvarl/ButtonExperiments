@@ -8,7 +8,7 @@ require 'app/game.rb'
 class MyGame < Game
 
     MEDIATE_MESSAGES = [
-        {whisper_min: 0, whisper_max: 10, text: "Dear Diary: I meditated and I feel empowered. Dear Diary, this is a very very log line of long text to test long text line wrapping order."},
+        {whisper_min: 0, whisper_max: 10, text: "Dear Diary: I meditated and I feel empowered."},
         {whisper_min: 0, whisper_max: 15, text: "Dear Diary: That was a very nice cup of tea."},
         {whisper_min: 5, whisper_max: 20, text: "Dear Diary: Napped a lot."},
         {whisper_min: 5, whisper_max: 25, text: "Hello Friend: Why don't you evern write back?"},
@@ -60,7 +60,7 @@ class MyGame < Game
             generate_resource(:whispers)
             a.ticks_remaining = a.ticks_total
             if rand(10) <3
-                whispers = ["Whispers", "Ghostly touch", "Self doubt", "Management would like a wor."]
+                whispers = ["Whispers", "Ghostly touch", "Self doubt", "Management would like a word."]
                 set_resource_label(:whispers, whispers.sample)
             end
             whisper_value = get_resource(:whispers)
