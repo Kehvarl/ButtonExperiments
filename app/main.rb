@@ -13,4 +13,9 @@ def tick args
 
     args.state.game.tick()
     args.state.game.render()
+    if not args.state.game.running
+        args.outputs.primitives << {x:500, y:350, w:280, h:180, r:128, g:128, b:128}.solid
+        args.outputs.primitives << {x:500, y:350, w:280, h:180, r:64, g:64, b:64}.border
+        args.outputs.primitives << {x:600, y:450, w:280, h:180, text: "Game Over", r:0, g:0, b:0}.label
+    end
 end

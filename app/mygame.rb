@@ -34,7 +34,7 @@ class MyGame < Game
         { whisper_min: 40, text: "You are not authorized to ignore this." },
         { whisper_min: 45, text: "Stop clicking.", color:{r:255, g:255, b:255}  },
         { whisper_min: 50, text: "The Diary is not private." }
-                ]
+        ]
 
 
     def initialize args
@@ -60,7 +60,7 @@ class MyGame < Game
             generate_resource(:whispers)
             a.ticks_remaining = a.ticks_total
             if rand(10) <3
-                whispers = ["Whispers", "Ghostly touch", "Self doubt", "Management would like a wor."]
+                whispers = ["Whispers", "Ghostly touch", "Self doubt", "Management would like a word."]
                 set_resource_label(:whispers, whispers.sample)
             end
             whisper_value = get_resource(:whispers)
@@ -131,7 +131,7 @@ class MyGame < Game
         decay = @defend_increment + (whispers * 0.01)
 
         b.highlight_percent -= decay
-        if b.highlight_percent <= 0
+        if b.highlight_percent <= 0 and b.show
             if whispers < 10
                 mgs = "I don't feel like myself anymore."
             elsif whispers < 25
@@ -141,6 +141,7 @@ class MyGame < Game
             end
             add_message(:diary, "Dear Diary: #{msg}")
             b.show = false
+            @running = false
         end
     end
 end
