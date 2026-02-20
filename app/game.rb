@@ -113,6 +113,30 @@ class Game
         render_logs
     end
 
+
+    def wrap_text(text, max_width_px, size_px=14, font=nil)
+        words = text.split(" ")
+        lines = []
+        current_line = ""
+
+        words.each do |word|
+            test_line = current_line.empty? ? word : "#{current_line} #{word}"
+
+            w, _h = @args.gtk.calcstringbox(test_line, size_px: size_px, font: font)
+
+            if w <= max_width_px
+                current_line = test_line
+            else
+                lines << current_line unless current_line.empty?
+                current_line = word
+            end
+        end
+
+        lines << current_line unless current_line.empty?
+
+        lines
+    end
+
     def render_logs
         @logs.each do |l|
             log = l[1]
@@ -136,18 +160,20 @@ class Game
             y_cursor = log.y + log.h - log.padding
 
             log.messages.reverse.each do |msg|
-                y_cursor -= log.line_height
-                if y_cursor < log.y + log.padding
-                    break
+                split_lines = wrap_text(msg.text, log.w - (log.padding * 2), log.line_height)
+                split_lines.each do |line|
+                    y_cursor -= log.line_height
+                    if y_cursor < log.y + log.padding
+                        break
+                    end
+                    @args.outputs.primitives << {
+                        x: log.x + log.padding,
+                        y: y_cursor,
+                        text: line,
+                        size_px: log.line_height-1,
+                        **msg.color
+                    }.label!
                 end
-
-                @args.outputs.primitives << {
-                    x: log.x + log.padding,
-                    y: y_cursor,
-                    text: msg.text,
-                    size_px: log.line_height-1,
-                    **msg.color
-                }.label!
             end
         end
     end

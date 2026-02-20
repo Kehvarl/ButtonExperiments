@@ -8,7 +8,7 @@ require 'app/game.rb'
 class MyGame < Game
 
     MEDIATE_MESSAGES = [
-        {whisper_min: 0, whisper_max: 10, text: "Dear Diary: I meditated and I feel empowered."},
+        {whisper_min: 0, whisper_max: 10, text: "Dear Diary: I meditated and I feel empowered. Dear Diary, this is a very very log line of long text to test long text line wrapping order."},
         {whisper_min: 0, whisper_max: 15, text: "Dear Diary: That was a very nice cup of tea."},
         {whisper_min: 5, whisper_max: 20, text: "Dear Diary: Napped a lot."},
         {whisper_min: 5, whisper_max: 25, text: "Hello Friend: Why don't you evern write back?"},
@@ -34,7 +34,7 @@ class MyGame < Game
         { whisper_min: 40, text: "You are not authorized to ignore this." },
         { whisper_min: 45, text: "Stop clicking.", color:{r:255, g:255, b:255}  },
         { whisper_min: 50, text: "The Diary is not private." }
-                ]
+        ]
 
 
     def initialize args
@@ -131,7 +131,7 @@ class MyGame < Game
         decay = @defend_increment + (whispers * 0.01)
 
         b.highlight_percent -= decay
-        if b.highlight_percent <= 0
+        if b.highlight_percent <= 0 and b.show
             if whispers < 10
                 mgs = "I don't feel like myself anymore."
             elsif whispers < 25
