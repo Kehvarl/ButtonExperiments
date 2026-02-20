@@ -1,5 +1,6 @@
 class Game
     def initialize args
+        @running = true
         @args = args
         @buttons = {}
         @actors = {}
@@ -72,6 +73,9 @@ class Game
     end
 
     def tick
+        if not @running
+            return
+        end
         @actors.each do |a|
             if self.respond_to? a[1].on_tick
                 self.send(a[1].on_tick)

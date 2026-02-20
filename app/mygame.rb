@@ -141,6 +141,7 @@ class MyGame < Game
             end
             add_message(:diary, "Dear Diary: #{msg}")
             b.show = false
+            @running = false
         end
     end
 end
