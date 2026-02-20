@@ -1,4 +1,5 @@
 class Game
+    attr_accessor :running
     def initialize args
         @running = true
         @args = args
