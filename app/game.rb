@@ -194,6 +194,11 @@ class Game
         @values[resource].value+= qty
     end
 
+    def set_resource(resource, qty, show=true)
+        ensure_resource(resource, show)
+        @values[resource].value = qty
+    end
+
     def get_resource(resource)
         ensure_resource(resource)
         return @values[resource].value
