@@ -39,18 +39,36 @@ class MyGame < Game
 
     def initialize args
         super
+
+        # Build Clarity, Clarity makes the world better
         create_button :meditate, 600, 400, "Meditation"
         highlight_button :meditate
         reveal_button :meditate
-        create_button :defend, 600, 450, "Sanity"
-        highlight_button :defend, 100
-        reveal_button :defend
+        @block_whispers = 25 # Too low, but a start...
+
+        # Keep this above 0 at all costs
+        create_button :sanity, 600, 450, "Sanity"
+        highlight_button :sanity, 100
+        reveal_button :sanity
         @defend_increment = 0.1
-        create_button :fortify, 600, 500, "Reaffirm Self (3)"
+
+        # You gotta sleep sometime...
+        @focus_max = 50
+        generate_resource(:focus, qty=@focus_max)
+        create_button :sleep, 600, 500, "Sleep"
+        highlight_button :sleep
+        reveal_button :sleep
+
+        # A way to bring down Whispers
+        create_button :fortify, 600, 350, "Reaffirm Self (3)"
         highlight_button :fortify
+
+        # Let's keep track of things
+        create_log :diary, 300, 10, 680, 270
+
+        # Things get... weird
         create_actor :whispers
         @actors[:whispers].ticks_total = 120
-        create_log :diary, 300, 10, 680, 270
     end
 
     def whispers_tick
@@ -58,7 +76,7 @@ class MyGame < Game
         a.ticks_remaining -=1
         if a.ticks_remaining <= 0
             generate_resource(:whispers)
-            a.ticks_remaining = a.ticks_total
+            a.ticks_remaining = (a.ticks_totsl + (get_resource(:clarity) * 7.2)).clamp(120, 480).to_i
             if rand(10) <3
                 whispers = ["Whispers", "Ghostly touch", "Self doubt", "Management would like a word."]
                 set_resource_label(:whispers, whispers.sample)
@@ -105,7 +123,7 @@ class MyGame < Game
 
     def meditate_clicked
         b = @buttons[:meditate]
-        if b.highlight_percent >= 100
+        if b.highlight_percent >= 100 and use_resource(:focus, 5)
             generate_resource(:clarity)
             b.highlight_percent = 0
             add_message(:diary, get_meditate_message(get_resource(:whispers)))
@@ -117,23 +135,37 @@ class MyGame < Game
         b.highlight_percent += 1
     end
 
+    def sleep_tick
+        b = @buttons[:sleep]
+        if get_resource(:focus) < @focus_max
+            b.highlight_percent = 100
+        end
+    end
 
-    def defend_clicked
-        b = @buttons[:defend]
+    def sleep_clicked
+        b = @buttons[:sleep]
+        if b.highlight_percent >= 100
+            b.highlight_percent = 0
+            set_resource(:focus, @focus_max)
+            set_resource(:clarity, (get_resource(:clarity) * 0.7).to_i)
+        end
+    end
+
+    def sanity_clicked
+        b = @buttons[:sanity]
         if b.highlight_percent > 0
             b.highlight_percent = 100
         end
     end
 
-    def defend_tick
-        b = @buttons[:defend]
+    def sanity_tick
+        b = @buttons[:sanity]
         whispers = get_resource(:whispers)
-        decay = @defend_increment + (whispers * 0.01)
 
-        b.highlight_percent -= decay
+        b.highlight_percent -= @defend_increment + (whispers * 0.01)
         if b.highlight_percent <= 0 and b.show
             if whispers < 10
-                mgs = "I don't feel like myself anymore."
+                msg = "I don't feel like myself anymore."
             elsif whispers < 25
                 msg = "I don't feel like myself."
             else
