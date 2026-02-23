@@ -3,6 +3,7 @@ class Game
     def initialize args
         @running = true
         @args = args
+        @unlocks = {}
         @buttons = {}
         @actors = {}
         @values = {}
@@ -181,6 +182,22 @@ class Game
                 end
             end
         end
+    end
+
+    def add_unlock(key)
+        @unlocks[key] = false
+    end
+
+    def unlocked?(key)
+        @unlocks[key] == true
+    end
+
+    def unlock(key)
+        if not unlocked?(key)
+            @unlocks[key] = true
+            return true
+        end
+        return false
     end
 
     def ensure_resource(resource, show = true)

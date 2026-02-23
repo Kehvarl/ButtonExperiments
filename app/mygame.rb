@@ -5,6 +5,9 @@ require 'app/game.rb'
 # - Increase "Defend" decay rate based on "Passive" Count
 # - "Fortify" reduces "Passive" Count
 # - Sleep/Whisper-spike to  setting a counter/value based on whisper level.  Use this counter to trigger nightmares
+# - Hide Sleep until first time Focus hits 0.
+# - Look into new unlock system for Reaffirm
+
 
 
 class MyGame < Game
