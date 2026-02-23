@@ -4,6 +4,11 @@ require 'app/game.rb'
 # - Hide "Passive" count
 # - Increase "Defend" decay rate based on "Passive" Count
 # - "Fortify" reduces "Passive" Count
+# - Sleep/Whisper-spike to  setting a counter/value based on whisper level.  Use this counter to trigger nightmares
+# - Hide Sleep until first time Focus hits 0.
+# - Look into new unlock system for Reaffirm
+
+
 
 class MyGame < Game
 
@@ -148,6 +153,8 @@ class MyGame < Game
             b.highlight_percent = 0
             set_resource(:focus, @focus_max)
             set_resource(:clarity, (get_resource(:clarity) * 0.7).to_i)
+            # Spike Whispers.   TODO:  Replace with a nightmare counter, and gated spikes or other actions
+            generate_resource(:whispers, 4)
         end
     end
 
