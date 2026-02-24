@@ -78,6 +78,7 @@ class Game
         if not @running
             return
         end
+
         @actors.each do |a|
             if self.respond_to? a[1].on_tick
                 self.send(a[1].on_tick)
@@ -184,7 +185,7 @@ class Game
         end
     end
 
-    def add_unlock(key)
+    def create_unlock(key)
         @unlocks[key] = false
     end
 
@@ -195,6 +196,9 @@ class Game
     def unlock(key)
         if not unlocked?(key)
             @unlocks[key] = true
+            if self.respond_to? "#{key}_unlocked".to_sym
+                 self.send("#{key}_unlocked".to_sym)
+            end
             return true
         end
         return false
