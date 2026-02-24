@@ -5,8 +5,6 @@ require 'app/game.rb'
 # - Increase "Defend" decay rate based on "Passive" Count
 # - "Fortify" reduces "Passive" Count
 # - Sleep/Whisper-spike to  setting a counter/value based on whisper level.  Use this counter to trigger nightmares
-# - Hide Sleep until first time Focus hits 0.
-# - Look into new unlock system for Reaffirm
 
 
 
@@ -62,11 +60,11 @@ class MyGame < Game
         generate_resource(:focus, qty=@focus_max)
         create_button :sleep, 600, 500, "Sleep"
         highlight_button :sleep
-        reveal_button :sleep
 
         # A way to bring down Whispers
         create_button :fortify, 600, 350, "Reaffirm Self (3)"
         highlight_button :fortify
+        create_unlock(:fortify)
 
         # Let's keep track of things
         create_log :diary, 300, 10, 680, 270
@@ -81,7 +79,7 @@ class MyGame < Game
         a.ticks_remaining -=1
         if a.ticks_remaining <= 0
             generate_resource(:whispers)
-            a.ticks_remaining = (a.ticks_totsl + (get_resource(:clarity) * 7.2)).clamp(120, 480).to_i
+            a.ticks_remaining = (a.ticks_total + (get_resource(:clarity) * 7.2)).clamp(120, 480).to_i
             if rand(10) <3
                 whispers = ["Whispers", "Ghostly touch", "Self doubt", "Management would like a word."]
                 set_resource_label(:whispers, whispers.sample)
@@ -113,11 +111,17 @@ class MyGame < Game
     def fortify_tick
         b = @buttons[:fortify]
         if get_resource(:clarity) >= 3
+            if unlock(:fortify)
+                add_message(:diary, "I found a technique that might be helpful.")
+            end
             b.highlight_percent = 100
-            reveal_button :fortify
         else
             b.highlight_percent = 0
         end
+    end
+
+    def fortify_unlocked
+        reveal_button :fortify
     end
 
     def get_meditate_message(value)
@@ -142,6 +146,9 @@ class MyGame < Game
 
     def sleep_tick
         b = @buttons[:sleep]
+        if not b.show and get_resource(:focus) <= 0
+            reveal_button :sleep
+        end
         if get_resource(:focus) < @focus_max
             b.highlight_percent = 100
         end
