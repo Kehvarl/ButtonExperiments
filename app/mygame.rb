@@ -53,6 +53,7 @@ class MyGame < Game
         # Keep this above 0 at all costs
         create_button :sanity, 600, 450, "Sanity"
         highlight_button :sanity, 100
+        auto_highlight :sanity, 0, 10
         reveal_button :sanity
         @defend_increment = 0.05
 
@@ -182,13 +183,14 @@ class MyGame < Game
         b = @buttons[:sanity]
         if b.highlight_percent > 0
             b.highlight_percent = 100
+            auto_highlight :sanity, 0, 10
         end
     end
 
     def sanity_tick
         b = @buttons[:sanity]
         whispers = get_resource(:whispers)
-        b.highlight_percent -= @defend_increment + (whispers * 0.01) * (1.0 + get_resource(:clarity) * 0.02)
+        #b.highlight_percent -= @defend_increment + (whispers * 0.01) * (1.0 + get_resource(:clarity) * 0.02)
         if b.highlight_percent <= 0 and b.show
             if whispers < 10
                 msg = "I don't feel like myself anymore."
