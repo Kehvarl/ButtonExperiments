@@ -46,6 +46,11 @@ class Game
         @buttons[id].highlight_rate = percent_per_second
     end
 
+    def restart_highlight id, starting_percent = 0, target_percent = 100
+        @buttons[id].highlight_percent = starting_percent
+        @buttons[id].highlight_target = target_percent
+    end
+
     def reveal_button id
         @buttons[id].show = true
     end
