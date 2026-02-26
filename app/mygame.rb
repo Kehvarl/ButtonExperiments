@@ -46,6 +46,7 @@ class MyGame < Game
         # Build Clarity, Clarity makes the world better
         create_button :meditate, 600, 400, "Meditation"
         highlight_button :meditate
+        auto_highlight :meditate, 100, 25
         reveal_button :meditate
         @block_whispers = 25 # Too low, but a start...
 
@@ -53,7 +54,7 @@ class MyGame < Game
         create_button :sanity, 600, 450, "Sanity"
         highlight_button :sanity, 100
         reveal_button :sanity
-        @defend_increment = 0.1
+        @defend_increment = 0.05
 
         # You gotta sleep sometime...
         @focus_max = 50
@@ -142,6 +143,7 @@ class MyGame < Game
             if use_resource(:focus, volatility(5))
                 generate_resource(:clarity)
                 b.highlight_percent = 0
+                auto_highlight :meditate, 100, 25
                 add_message(:diary, get_meditate_message(get_resource(:whispers)))
             else
                 add_message(:diary, "I don't think I have it in me to meditate now.  I need some sleep.")
@@ -151,8 +153,8 @@ class MyGame < Game
     end
 
     def meditate_tick
-        b = @buttons[:meditate]
-        b.highlight_percent += 1
+        #b = @buttons[:meditate]
+        #b.highlight_percent += 1
     end
 
     def sleep_tick
@@ -170,7 +172,7 @@ class MyGame < Game
         if b.highlight_percent >= 100
             b.highlight_percent = 0
             set_resource(:focus, @focus_max)
-            set_resource(:clarity, (get_resource(:clarity) * 0.7).to_i)
+            set_resource(:clarity, (get_resource(:clarity) - 3).to_i)
             # Spike Whispers.   TODO:  Replace with a nightmare counter, and gated spikes or other actions
             generate_resource(:whispers, 4)
         end

@@ -41,6 +41,11 @@ class Game
         @buttons[id].highlight_percent = starting_percent
     end
 
+    def auto_highlight id, target_percent = 100, percent_per_second = 10
+        @buttons[id].highlight_target = target_percent
+        @buttons[id].highlight_rate = percent_per_second
+    end
+
     def reveal_button id
         @buttons[id].show = true
     end
@@ -74,23 +79,39 @@ class Game
         log[:messages] = log[:messages].last(log[:max_messages])
     end
 
+    def calculate_highlight button
+        time = 1.0/60
+        if button.highlight and (button.highlight_target)
+            diff = button.highlight_target - button.highlight_percent
+            step = button.highlight_rate * time
+
+            if diff.abs <= step
+                button.highlight_percent = button.highlight_target
+                button.highlight_target = nil
+            else
+                button.highlight_percent += step * (diff < 0 ? -1 : 1)
+            end
+        end
+    end
+
     def tick
         if not @running
             return
         end
 
-        @actors.each do |a|
-            if self.respond_to? a[1].on_tick
-                self.send(a[1].on_tick)
+        @actors.each do |_, actor|
+            if self.respond_to? actor.on_tick
+                self.send(actor.on_tick)
             end
         end
 
-        @buttons.each do |b|
-            if self.respond_to? b[1].on_tick
-                self.send(b[1].on_tick)
+        @buttons.each do |_, button|
+            if self.respond_to? button.on_tick
+                self.send(button.on_tick)
             end
-            if b[1].highlight and (b[1].highlight_percent <= 100)
-                b[1].primitives[1].w = b[1].primitives[0].w * (b[1].highlight_percent/100.0)
+            calculate_highlight(button)
+            if button.highlight
+                button.primitives[1].w = button.primitives[0].w * (button.highlight_percent/100.0).clamp(0.0, 1.0)
             end
         end
 
@@ -105,9 +126,9 @@ class Game
     end
 
     def render
-        @buttons.each do |b|
-            if b[1].show
-                @args.outputs.primitives << b[1].primitives
+        @buttons.each do |_, button|
+            if button.show
+                @args.outputs.primitives << button.primitives
             end
         end
 
