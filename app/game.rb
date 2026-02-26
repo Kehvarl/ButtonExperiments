@@ -41,6 +41,18 @@ class Game
         @buttons[id].highlight_percent = starting_percent
     end
 
+    def button_transition id, from=0, to=100, duration=2.0
+        @buttons[id].transition: = {active: false, from: from, to: to, duration: duration, elapsed: 0.0}
+    end
+
+    def start_transition id
+        @buttons[id].transition.active = true
+    end
+
+    def stop_transition id
+        @buttons[id].transition.active = false
+    end
+
     def reveal_button id
         @buttons[id].show = true
     end
@@ -74,6 +86,30 @@ class Game
         log[:messages] = log[:messages].last(log[:max_messages])
     end
 
+    def tick_buttons
+        seconds = 1.0/60.0
+        @buttons.each do |b|
+            if self.respond_to? b[1].on_tick
+                self.send(b[1].on_tick)
+            end
+
+            if b[1].transition and b[1].transition.active
+                t = b[1].transition
+                t.elapsed += seconds
+                progress = t.elapsed / t.duration
+                if progress > 1
+                    progress = 1
+                    t.active = false
+                end
+                b[1].highlight_percent = t.from + (t.to - t.from) * progress
+            end
+
+            if b[1].highlight and (b[1].highlight_percent <= 100)
+                b[1].primitives[1].w = b[1].primitives[0].w * (b[1].highlight_percent/100.0)
+            end
+        end
+    end
+
     def tick
         if not @running
             return
@@ -85,14 +121,7 @@ class Game
             end
         end
 
-        @buttons.each do |b|
-            if self.respond_to? b[1].on_tick
-                self.send(b[1].on_tick)
-            end
-            if b[1].highlight and (b[1].highlight_percent <= 100)
-                b[1].primitives[1].w = b[1].primitives[0].w * (b[1].highlight_percent/100.0)
-            end
-        end
+        tick_buttons
 
         if @args.inputs.mouse.click
             b = @buttons.find do |k, v|

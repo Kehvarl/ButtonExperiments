@@ -53,7 +53,7 @@ class MyGame < Game
         create_button :sanity, 600, 450, "Sanity"
         highlight_button :sanity, 100
         reveal_button :sanity
-        @defend_increment = 0.1
+        @defend_increment = 0.05
 
         # You gotta sleep sometime...
         @focus_max = 50
@@ -170,7 +170,7 @@ class MyGame < Game
         if b.highlight_percent >= 100
             b.highlight_percent = 0
             set_resource(:focus, @focus_max)
-            set_resource(:clarity, (get_resource(:clarity) * 0.7).to_i)
+            set_resource(:clarity, (get_resource(:clarity) - 3).to_i)
             # Spike Whispers.   TODO:  Replace with a nightmare counter, and gated spikes or other actions
             generate_resource(:whispers, 4)
         end
