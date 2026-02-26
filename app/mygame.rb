@@ -46,6 +46,7 @@ class MyGame < Game
         # Build Clarity, Clarity makes the world better
         create_button :meditate, 600, 400, "Meditation"
         highlight_button :meditate
+        auto_highlight :meditate, 100, 25
         reveal_button :meditate
         @block_whispers = 25 # Too low, but a start...
 
@@ -142,6 +143,7 @@ class MyGame < Game
             if use_resource(:focus, volatility(5))
                 generate_resource(:clarity)
                 b.highlight_percent = 0
+                auto_highlight :meditate, 100, 25
                 add_message(:diary, get_meditate_message(get_resource(:whispers)))
             else
                 add_message(:diary, "I don't think I have it in me to meditate now.  I need some sleep.")
@@ -151,8 +153,8 @@ class MyGame < Game
     end
 
     def meditate_tick
-        b = @buttons[:meditate]
-        b.highlight_percent += 1
+        #b = @buttons[:meditate]
+        #b.highlight_percent += 1
     end
 
     def sleep_tick
