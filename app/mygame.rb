@@ -43,6 +43,8 @@ class MyGame < Game
     def initialize args
         super
 
+        @location = :room
+
         # Build Clarity, Clarity makes the world better
         create_button :meditate, 600, 400, "Meditation"
         highlight_button :meditate
@@ -53,6 +55,7 @@ class MyGame < Game
         # Keep this above 0 at all costs
         create_button :sanity, 600, 450, "Sanity"
         highlight_button :sanity, 100
+        auto_highlight :sanity, 0, 10
         reveal_button :sanity
         @defend_increment = 0.05
 
@@ -73,10 +76,55 @@ class MyGame < Game
         # Things get... weird
         create_actor :whispers
         @actors[:whispers].ticks_total = 120
+
+        # Somewehere to go
+        create_button :door, 600, 300, "Door"
+        highlight_button :door
+        reveal_button :door
+
+        #-- Hallway
+        # Look Around
+        create_button :explore, 600, 400, "Explore"
+        highlight_button :explore
+
+        # Somewehere to go
+        create_button :return_room, 600, 300, "Return to Room"
+        highlight_button :return_room
+
+        @button_locations = {
+            meditate: :room,
+            sleep: :room,
+            door: :room,
+            explore: :hall,
+            return_room: :hall,
+            fortify: :room,
+            sanity: :global
+        }
+    end
+
+    def change_room room
+        if @location == room
+            return
+        end
+
+        @buttons.each do |id, b|
+            loc = @button_locations[id]
+            b.show = (loc == room || loc == :global)
+        end
+
+        @location = room
     end
 
     def volatility base=1
         base * (1.0 + (get_resource(:clarity) ** 2) * 0.002)
+    end
+
+    def door_clicked
+        change_room :hall
+    end
+
+    def return_room_clicked
+        change_room :room
     end
 
     def whispers_tick
@@ -143,7 +191,7 @@ class MyGame < Game
             if use_resource(:focus, volatility(5))
                 generate_resource(:clarity)
                 b.highlight_percent = 0
-                auto_highlight :meditate, 100, 25
+                restart_highlight :meditate, 0, 100
                 add_message(:diary, get_meditate_message(get_resource(:whispers)))
             else
                 add_message(:diary, "I don't think I have it in me to meditate now.  I need some sleep.")
@@ -155,6 +203,7 @@ class MyGame < Game
     def meditate_tick
         #b = @buttons[:meditate]
         #b.highlight_percent += 1
+        # If I don't touch meditate, does it do anything?  Maybe if I leave it at 100% long enough.
     end
 
     def sleep_tick
@@ -182,13 +231,14 @@ class MyGame < Game
         b = @buttons[:sanity]
         if b.highlight_percent > 0
             b.highlight_percent = 100
+            restart_highlight :sanity, 100, 0
         end
     end
 
     def sanity_tick
         b = @buttons[:sanity]
         whispers = get_resource(:whispers)
-        b.highlight_percent -= @defend_increment + (whispers * 0.01) * (1.0 + get_resource(:clarity) * 0.02)
+        #b.highlight_percent -= @defend_increment + (whispers * 0.01) * (1.0 + get_resource(:clarity) * 0.02)
         if b.highlight_percent <= 0 and b.show
             if whispers < 10
                 msg = "I don't feel like myself anymore."
