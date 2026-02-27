@@ -43,6 +43,8 @@ class MyGame < Game
     def initialize args
         super
 
+        @location = :room
+
         # Build Clarity, Clarity makes the world better
         create_button :meditate, 600, 400, "Meditation"
         highlight_button :meditate
@@ -74,10 +76,55 @@ class MyGame < Game
         # Things get... weird
         create_actor :whispers
         @actors[:whispers].ticks_total = 120
+
+        # Somewehere to go
+        create_button :door, 600, 300, "Door"
+        highlight_button :door
+        reveal_button :door
+
+        #-- Hallway
+        # Look Around
+        create_button :explore, 600, 400, "Explore"
+        highlight_button :explore
+
+        # Somewehere to go
+        create_button :return_room, 600, 300, "Return to Room"
+        highlight_button :return_room
+
+        @button_locations = {
+            meditate: :room,
+            sleep: :room,
+            door: :room,
+            explore: :hall,
+            return_room: :hall,
+            fortify: :room,
+            sanity: :global
+        }
+    end
+
+    def change_room room
+        if @location == room
+            return
+        end
+
+        @buttons.each do |id, b|
+            loc = @button_locations[id]
+            b.show = (loc == room || loc == :global)
+        end
+
+        @location = room
     end
 
     def volatility base=1
         base * (1.0 + (get_resource(:clarity) ** 2) * 0.002)
+    end
+
+    def door_clicked
+        change_room :hall
+    end
+
+    def return_room_clicked
+        change_room :room
     end
 
     def whispers_tick

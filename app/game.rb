@@ -121,11 +121,14 @@ class Game
         end
 
         if @args.inputs.mouse.click
-            b = @buttons.find do |k, v|
+            b = @buttons.find_all do |k, v|
                 @args.inputs.mouse.click.point.inside_rect? v[:primitives].first
             end
-            if b and b[1].show and self.respond_to? b[1].on_click
-                self.send b[1].on_click
+            b.each do |_, button|
+                puts button
+                if button.show and self.respond_to? button.on_click
+                    self.send button.on_click
+                end
             end
         end
     end
