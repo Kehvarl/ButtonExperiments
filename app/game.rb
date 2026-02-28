@@ -1,8 +1,34 @@
+# ============================================================
+# Kehvarl's DragonRuby Clicker Engine
+#
+# A minimal multi-location clicker engine.
+#
+# Core Concepts:
+#   Location  - Scopes rendering and ticking.
+#   Buttons   - UI elements with tick/click hooks.
+#   Actors    - Background ticking entities.
+#   Resources - Numeric tracked values.
+#   Unlocks   - Boolean flags with optional callbacks.
+#   Logs      - Scrollable message panels.
+#
+# Frame Order:
+#   tick   -> actors, buttons, input
+#   render -> buttons, resources, logs
+#
+# Extension Conventions:
+#   <id>_tick
+#   <id>_clicked
+#   <key>_unlocked
+#
+# Defined methods are dispatched automatically.
+# ============================================================
+
 class Game
     attr_accessor :running
     def initialize args
         @running = true
         @args = args
+        @location = nil
         @unlocks = {}
         @buttons = {}
         @actors = {}
@@ -14,129 +40,85 @@ class Game
         @default_text_color = {r:0,g:0,b:0}
     end
 
-    def create_button id, x, y, text, w=nil, h=nil
-        if w == nil or h == nil
-            w, h = @args.gtk.calcstringbox text
-            w += 20
-            h += 20
-        end
-        @buttons[id] = {
-            show: false,
-            text: text,
-            on_click: "#{id}_clicked".to_sym,
-            on_tick: "#{id}_tick".to_sym,
-            highlight_percent: 0,
-            highlight: false,
-            primitives: [
-                {x:x, y:y, w:w, h:h, **@default_button_color}.solid!,
-                {x:x, y:y, w:0, h:h, **@default_hightlight_color}.solid!,
-                {x:x, y:y, w:w, h:h, **@default_border_color}.border!,
-                {x: x + 10, y:y + 30 ,text:text, **@default_text_color}.label!,
-            ]}
-    end
-
-    def highlight_button id, starting_percent = 0
-        @buttons[id].highlight = true
-        @buttons[id].primitives[1].w = @buttons[id].primitives[0].w * (starting_percent / 100.0)
-        @buttons[id].highlight_percent = starting_percent
-    end
-
-    def auto_highlight id, target_percent = 100, percent_per_second = 10
-        @buttons[id].highlight_target = target_percent
-        @buttons[id].highlight_rate = percent_per_second
-    end
-
-    def restart_highlight id, starting_percent = 0, target_percent = 100
-        @buttons[id].highlight_percent = starting_percent
-        @buttons[id].highlight_target = target_percent
-    end
-
-    def reveal_button id
-        @buttons[id].show = true
-    end
-
-    def create_actor id, ticks_total: 60
-        @actors[id] = {
-                    ticks_total: ticks_total,
-                    ticks_remaining: ticks_total,
-                    on_tick: "#{id}_tick".to_sym,
-            }
-    end
-
-    def create_log id, x, y, w, h
-        @logs[id] = {
-                id: id,
-                x: x, y: y, w: w, h: h,
-                messages: [],
-                max_messages: 50,
-                padding: 8,
-                line_height: 16,
-                show: true
-        }
-    end
-
-    def add_message(log_id, text, color=nil)
-        log = @logs[log_id]
-        return unless log
-
-        c = color || { r: 230, g: 230, b: 230 }
-        log[:messages] << {text: text, color: c}
-        log[:messages] = log[:messages].last(log[:max_messages])
-    end
-
-    def calculate_highlight button
-        time = 1.0/60
-        if button.highlight and (button.highlight_target)
-            diff = button.highlight_target - button.highlight_percent
-            step = button.highlight_rate * time
-
-            if diff.abs <= step
-                button.highlight_percent = button.highlight_target
-                button.highlight_target = nil
-            else
-                button.highlight_percent += step * (diff < 0 ? -1 : 1)
-            end
-        end
-    end
-
-    def tick
-        if not @running
-            return
-        end
-
-        @actors.each do |_, actor|
-            if self.respond_to? actor.on_tick
-                self.send(actor.on_tick)
-            end
-        end
-
-        @buttons.each do |_, button|
-            if self.respond_to? button.on_tick
-                self.send(button.on_tick)
-            end
-            calculate_highlight(button)
-            if button.highlight
-                button.primitives[1].w = button.primitives[0].w * (button.highlight_percent/100.0).clamp(0.0, 1.0)
-            end
-        end
-
+# == Input ==
+# ------------------------------------------------------------
+# handle_mouse_click
+# Processes mouse click events.
+#
+# Invokes <id>_clicked for visible buttons
+# whose bounds contain the click and match location.
+# ------------------------------------------------------------
+    def handle_mouse_click
         if @args.inputs.mouse.click
             b = @buttons.find_all do |k, v|
-                @args.inputs.mouse.click.point.inside_rect? v[:primitives].first
+                v.show && @args.inputs.mouse.click.point.inside_rect?(v.primitives.first) &&  (v.location.nil? || v.location == @location)
             end
             b.each do |_, button|
-                puts button
-                if button.show and self.respond_to? button.on_click
+                if self.respond_to? button.on_click
                     self.send button.on_click
                 end
             end
         end
     end
 
+# == Update/Tick ==
+
+# ------------------------------------------------------------
+# tick
+# Main per-frame update loop.
+#
+# Order:
+#   1. Actors
+#   2. Buttons
+#   3. Input
+#
+# Skips execution if @running is false.
+# Dispatches:
+#   <id>_tick
+#   <id>_clicked
+# ------------------------------------------------------------
+    def tick
+        if not @running
+            return
+        end
+
+        @actors.each do |_, actor|
+            if actor_can_tick(actor)
+                if self.respond_to? actor.on_tick
+                    self.send(actor.on_tick)
+                end
+            end
+        end
+
+        @buttons.each do |_, button|
+            if button_can_tick(button)
+                if self.respond_to? button.on_tick
+                    self.send(button.on_tick)
+                end
+                calculate_highlight(button)
+                if button.highlight
+                    button.primitives[1].w = button.primitives[0].w * (button.highlight_percent/100.0).clamp(0.0, 1.0)
+                end
+            end
+        end
+
+        handle_mouse_click
+
+    end
+
+# == Render ==
+
+# ------------------------------------------------------------
+# render
+# Draws visible buttons, resources, and logs
+# for the current location.
+# ------------------------------------------------------------
     def render
         @buttons.each do |_, button|
             if button.show
-                @args.outputs.primitives << button.primitives
+                if button.location.nil? || button.location == @location
+                    @args.outputs.primitives << button.primitives
+                end
             end
         end
 
@@ -149,30 +131,13 @@ class Game
         render_logs
     end
 
-
-    def wrap_text(text, max_width_px, size_px=14, font=nil)
-        words = text.split(" ")
-        lines = []
-        current_line = ""
-
-        words.each do |word|
-            test_line = current_line.empty? ? word : "#{current_line} #{word}"
-
-            w, _h = @args.gtk.calcstringbox(test_line, size_px: size_px, font: font)
-
-            if w <= max_width_px
-                current_line = test_line
-            else
-                lines << current_line unless current_line.empty?
-                current_line = word
-            end
-        end
-
-        lines << current_line unless current_line.empty?
-
-        lines
-    end
-
+# ------------------------------------------------------------
+# render_logs
+# Renders all visible logs.
+#
+# Messages are drawn bottom-up and clipped
+# to the log’s bounding box.
+# ------------------------------------------------------------
     def render_logs
         @logs.each do |l|
             log = l[1]
@@ -214,14 +179,226 @@ class Game
         end
     end
 
+# == Buttons ==
+# ------------------------------------------------------------
+# create_button
+# Registers a button.
+#
+# Hidden by default.
+# Optional location limits render/tick scope.
+#
+# Implicit callbacks:
+#   <id>_clicked
+#   <id>_tick
+# ------------------------------------------------------------
+    def create_button id, x, y, text, w=nil, h=nil, location=nil, always_tick=nil
+        if w == nil or h == nil
+            w, h = @args.gtk.calcstringbox text
+            w += 20
+            h += 20
+        end
+        @buttons[id] = {
+            show: false,
+            text: text,
+            location: location,
+            always_tick: always_tick,
+            on_click: "#{id}_clicked".to_sym,
+            on_tick: "#{id}_tick".to_sym,
+            highlight_percent: 0,
+            highlight: false,
+            primitives: [
+                {x:x, y:y, w:w, h:h, **@default_button_color}.solid!,
+                {x:x, y:y, w:0, h:h, **@default_hightlight_color}.solid!,
+                {x:x, y:y, w:w, h:h, **@default_border_color}.border!,
+                {x: x + 10, y:y + 30 ,text:text, **@default_text_color}.label!,
+            ]}
+    end
+
+# ------------------------------------------------------------
+# highlight_button
+# Enables highlight rendering for a button.
+#
+# starting_percent sets initial fill level (0–100).
+# ------------------------------------------------------------
+    def highlight_button id, starting_percent = 0
+        @buttons[id].highlight = true
+        @buttons[id].primitives[1].w = @buttons[id].primitives[0].w * (starting_percent / 100.0)
+        @buttons[id].highlight_percent = starting_percent
+    end
+
+# ------------------------------------------------------------
+# auto_highlight
+# Animates highlight toward a target percentage.
+#
+# percent_per_second controls animation speed.
+# ------------------------------------------------------------
+    def auto_highlight id, target_percent = 100, percent_per_second = 10
+        @buttons[id].highlight_target = target_percent
+        @buttons[id].highlight_rate = percent_per_second
+    end
+
+# ------------------------------------------------------------
+# restart_highlight
+# Resets highlight progress and assigns a new target.
+# ------------------------------------------------------------
+    def restart_highlight id, starting_percent = 0, target_percent = 100
+        @buttons[id].highlight_percent = starting_percent
+        @buttons[id].highlight_target = target_percent
+    end
+
+# ------------------------------------------------------------
+# reveal_button
+# Makes a button eligible for rendering.
+# ------------------------------------------------------------
+    def reveal_button id
+        @buttons[id].show = true
+    end
+
+# ------------------------------------------------------------
+# calculate_highlight
+# Advances highlight animation toward its target.
+#
+# Called automatically during tick.
+# ------------------------------------------------------------
+    def calculate_highlight button
+        time = 1.0/60
+        if button.highlight and (button.highlight_target)
+            diff = button.highlight_target - button.highlight_percent
+            step = button.highlight_rate * time
+
+            if diff.abs <= step
+                button.highlight_percent = button.highlight_target
+                button.highlight_target = nil
+            else
+                button.highlight_percent += step * (diff < 0 ? -1 : 1)
+            end
+        end
+    end
+
+# Returns true if the button should tick this frame
+# based on location and always_tick.
+    def button_can_tick(button)
+        button.always_tick || button.location.nil? || button.location == @location
+    end
+
+# == Actors ==
+# ------------------------------------------------------------
+# create_actor
+# Registers a background ticking entity.
+#
+# Optional location restricts where it ticks.
+# Implicit callback:
+#   <id>_tick
+# ------------------------------------------------------------
+    def create_actor id, ticks_total: 60, location: nil, always_tick: nil
+        @actors[id] = {
+                    location: location,
+                    always_tick: always_tick,
+                    ticks_total: ticks_total,
+                    ticks_remaining: ticks_total,
+                    on_tick: "#{id}_tick".to_sym,
+            }
+    end
+
+# Returns true if the actor should tick this frame
+# based on location and always_tick.
+    def actor_can_tick(actor)
+        actor.always_tick || actor.location.nil? || actor.location == @location
+    end
+
+# == Resources ==
+# ------------------------------------------------------------
+# ensure_resource
+# Registers a resource entry if it does not exist.
+#
+# Resources track value, label, and visibility.
+# ------------------------------------------------------------
+    def ensure_resource(resource, show = true)
+        if !@values.key?(resource)
+            @values[resource] = {value: 0, label: resource.to_s.capitalize, show: show}
+        end
+    end
+
+# ------------------------------------------------------------
+# generate_resource
+# Increases a resource value.
+# ------------------------------------------------------------
+    def generate_resource(resource, qty=1, show=true)
+        ensure_resource(resource, show)
+        @values[resource].value+= qty
+    end
+
+# ------------------------------------------------------------
+# set_resource
+# Sets a resource to an explicit value.
+# ------------------------------------------------------------
+    def set_resource(resource, qty, show=true)
+        ensure_resource(resource, show)
+        @values[resource].value = qty
+    end
+
+# ------------------------------------------------------------
+# get_resource
+# Returns the current value of a resource.
+# ------------------------------------------------------------
+    def get_resource(resource)
+        ensure_resource(resource)
+        return @values[resource].value
+    end
+
+# ------------------------------------------------------------
+# use_resource
+# Attempts to subtract from a resource.
+#
+# Returns false if insufficient quantity.
+# ------------------------------------------------------------
+    def use_resource(resource, qty=1)
+        ensure_resource(resource)
+        if @values[resource].value < qty
+            return false
+        end
+        @values[resource].value -= qty
+        return true
+    end
+
+# ------------------------------------------------------------
+# set_resource_label
+# Updates display label and optional visibility.
+# ------------------------------------------------------------
+    def set_resource_label(resource, label, show=nil)
+        ensure_resource(resource)
+        @values[resource].label = label
+        if show != nil
+            @values[resource].show = show
+        end
+    end
+
+# == Unlocks ==
+# ------------------------------------------------------------
+# create_unlock
+# Registers a boolean unlock flag.
+# ------------------------------------------------------------
     def create_unlock(key)
         @unlocks[key] = false
     end
 
+# ------------------------------------------------------------
+# unlocked?
+# Returns true if the unlock has been activated.
+# ------------------------------------------------------------
     def unlocked?(key)
         @unlocks[key] == true
     end
 
+# ------------------------------------------------------------
+# unlock
+# Activates an unlock flag.
+#
+# Dispatches optional:
+#   <key>_unlocked
+#
+# Returns true if newly unlocked.
+# ------------------------------------------------------------
     def unlock(key)
         if not unlocked?(key)
             @unlocks[key] = true
@@ -233,41 +410,67 @@ class Game
         return false
     end
 
-    def ensure_resource(resource, show = true)
-        if !@values.key?(resource)
-            @values[resource] = {value: 0, label: resource.to_s.capitalize, show: show}
+# == Logs ==
+# ------------------------------------------------------------
+# create_log
+# Registers a message panel.
+#
+# Stores bounded message history.
+# ------------------------------------------------------------
+    def create_log id, x, y, w, h
+        @logs[id] = {
+                id: id,
+                x: x, y: y, w: w, h: h,
+                messages: [],
+                max_messages: 50,
+                padding: 8,
+                line_height: 16,
+                show: true
+        }
+    end
+
+# ------------------------------------------------------------
+# add_message
+# Appends a message to a log.
+#
+# Old messages are truncated to max_messages.
+# ------------------------------------------------------------
+    def add_message(log_id, text, color=nil)
+        log = @logs[log_id]
+        return unless log
+
+        c = color || { r: 230, g: 230, b: 230 }
+        log.messages << {text: text, color: c}
+        log.messages = log.messages.last(log.max_messages)
+    end
+
+# == Utilities ==
+# ------------------------------------------------------------
+# wrap_text
+# Splits text into lines constrained by pixel width.
+#
+# Uses GTK string measurement for accuracy.
+# ------------------------------------------------------------
+    def wrap_text(text, max_width_px, size_px=14, font=nil)
+        words = text.split(" ")
+        lines = []
+        current_line = ""
+
+        words.each do |word|
+            test_line = current_line.empty? ? word : "#{current_line} #{word}"
+
+            w, _h = @args.gtk.calcstringbox(test_line, size_px: size_px, font: font)
+
+            if w <= max_width_px
+                current_line = test_line
+            else
+                lines << current_line unless current_line.empty?
+                current_line = word
+            end
         end
-    end
 
-    def generate_resource(resource, qty=1, show=true)
-        ensure_resource(resource, show)
-        @values[resource].value+= qty
-    end
+        lines << current_line unless current_line.empty?
 
-    def set_resource(resource, qty, show=true)
-        ensure_resource(resource, show)
-        @values[resource].value = qty
-    end
-
-    def get_resource(resource)
-        ensure_resource(resource)
-        return @values[resource].value
-    end
-
-    def use_resource(resource, qty=1)
-        ensure_resource(resource)
-        if @values[resource].value < qty
-            return false
-        end
-        @values[resource].value -= qty
-        return true
-    end
-
-    def set_resource_label(resource, label, show=nil)
-        ensure_resource(resource)
-        @values[resource].label = label
-        if show != nil
-            @values[resource].show = show
-        end
+        lines
     end
 end
