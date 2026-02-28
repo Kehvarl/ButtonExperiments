@@ -47,6 +47,7 @@ class MyGame < Game
 
         # Build Clarity, Clarity makes the world better
         create_button :meditate, 600, 400, "Meditation"
+        @buttons[:meditate].location =  :room
         highlight_button :meditate
         auto_highlight :meditate, 100, 25
         reveal_button :meditate
@@ -54,6 +55,7 @@ class MyGame < Game
 
         # Keep this above 0 at all costs
         create_button :sanity, 600, 450, "Sanity"
+        #@buttons[:sanity].location =  :room
         highlight_button :sanity, 100
         auto_highlight :sanity, 0, 10
         reveal_button :sanity
@@ -63,10 +65,12 @@ class MyGame < Game
         @focus_max = 50
         generate_resource(:focus, qty=@focus_max)
         create_button :sleep, 600, 500, "Sleep"
+        @buttons[:sleep].location =  :room
         highlight_button :sleep
 
         # A way to bring down Whispers
         create_button :fortify, 600, 350, "Reaffirm Self (3)"
+        @buttons[:fortify].location =  :room
         highlight_button :fortify
         create_unlock(:fortify)
 
@@ -79,37 +83,27 @@ class MyGame < Game
 
         # Somewehere to go
         create_button :door, 600, 300, "Door"
+        @buttons[:door].location =  :room
         highlight_button :door
         reveal_button :door
 
         #-- Hallway
         # Look Around
         create_button :explore, 600, 400, "Explore"
+        @buttons[:explore].location =  :hall
         highlight_button :explore
+        reveal_button :explore
 
         # Somewehere to go
         create_button :return_room, 600, 300, "Return to Room"
+        @buttons[:return_room].location =  :hall
         highlight_button :return_room
-
-        @button_locations = {
-            meditate: :room,
-            sleep: :room,
-            door: :room,
-            explore: :hall,
-            return_room: :hall,
-            fortify: :room,
-            sanity: :global
-        }
+        reveal_button :return_room
     end
 
     def change_room room
         if @location == room
             return
-        end
-
-        @buttons.each do |id, b|
-            loc = @button_locations[id]
-            b.show = (loc == room || loc == :global)
         end
 
         @location = room
