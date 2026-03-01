@@ -473,4 +473,43 @@ class Game
 
         lines
     end
+
+# ------------------------------------------------------------
+# save_game
+# Save all current game state for later recall
+#
+# Uses GTK serialize to store a collection in a file
+# ------------------------------------------------------------
+    def save_game filename='game_state.txt'
+        state = {
+            running: @running,
+            location: @location,
+            unlocks: @unlocks,
+            buttons: @buttons,
+            actors: @actors,
+            values: @values,
+            logs: @logs
+        }
+        GTK.serialize_state(filename, state)
+    end
+
+# ------------------------------------------------------------
+# load_game
+# Retore the current game state from a file
+# ------------------------------------------------------------
+    def load_game filename='game_state.txt'
+        parsed_state = GTK.deserialize_state(filename)
+        if !parsed_state
+            puts "No saved game present"
+        else
+            @running = parsed_state[:running]
+            @location = parsed_state[:location]
+            @unlocks = parsed_state[:unlocks]
+            @buttons = parsed_state[:buttons]
+            @actors = parsed_state[:actors]
+            @values = parsed_state[:values]
+            @logs = parsed_state[:logs]
+            puts @location
+        end
+    end
 end

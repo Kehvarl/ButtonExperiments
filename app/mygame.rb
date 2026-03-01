@@ -45,6 +45,13 @@ class MyGame < Game
 
         @location = :room
 
+        create_button :save, 700, 500, "Save"
+        reveal_button :save
+
+        create_button :load, 700, 500, "Load"
+        @buttons[:load].location =  :hall
+        reveal_button :load
+
         # Build Clarity, Clarity makes the world better
         create_button :meditate, 600, 400, "Meditation"
         @buttons[:meditate].location =  :room
@@ -119,6 +126,14 @@ class MyGame < Game
 
     def return_room_clicked
         change_room :room
+    end
+
+    def save_clicked
+        save_game
+    end
+
+    def load_clicked
+        load_game
     end
 
     def whispers_tick
