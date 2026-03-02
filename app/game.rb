@@ -509,7 +509,6 @@ class Game
             @actors = parsed_state[:actors]
             @values = parsed_state[:values]
             @logs = parsed_state[:logs]
-            puts @location
         end
     end
 end
