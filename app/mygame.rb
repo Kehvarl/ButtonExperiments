@@ -46,6 +46,7 @@ class MyGame < Game
         @location = :room
 
         create_button :save, 700, 500, "Save"
+        @buttons[:save].location =  :room
         reveal_button :save
 
         create_button :load, 700, 500, "Load"
@@ -130,6 +131,8 @@ class MyGame < Game
 
     def save_clicked
         save_game
+        puts "save_clicked"
+        puts @location
     end
 
     def load_clicked
