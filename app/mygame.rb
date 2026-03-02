@@ -131,8 +131,6 @@ class MyGame < Game
 
     def save_clicked
         save_game
-        puts "save_clicked"
-        puts @location
     end
 
     def load_clicked
